@@ -560,7 +560,7 @@ $("#muteBtn").addEventListener("click", () => {
   $("#muteBtn").textContent = muted ? "🔇" : "🔊";
 });
 $("#shareBtn").addEventListener("click", async () => {
-  const text = "I scored " + score + "/" + ROUNDS + " on Sort It Right — Ward 11Aa, Model of Responsible Living 💚♻️ Can you beat me? Play here - http://ward11a-sort-it-right.onrender.com/";
+  const text = "I scored " + score + "/" + ROUNDS + " on Sort It Right — Ward 11Aa, Model of Responsible Living 💚♻️ Can you beat me? \nPlay here - http://ward11a-sort-it-right.onrender.com/";
   try {
     if (navigator.share) { await navigator.share({ text: text }); return; }
     await navigator.clipboard.writeText(text);
