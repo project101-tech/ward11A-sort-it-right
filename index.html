@@ -9,7 +9,7 @@
 <style>
 :root{
   --bg1:#eafaf0; --bg2:#d3efdd; --ink:#14301f; --muted:#4d6a58;
-  --green:#1f9d55; --blue:#2563eb; --red:#dc2626; --black:#2a2a33;
+  --green:#1f9d55; --blue:#2563eb; --red:#dc2626; --black:#2a2a33; --yellow:#eab308;
   --gold:#f5b301;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -42,6 +42,7 @@ button{font:inherit;cursor:pointer}
 :focus-visible{outline:3px solid #0b5fff;outline-offset:3px}
 .chip{display:inline-block;padding:1px 10px;border-radius:999px;color:#fff;font-weight:800;white-space:nowrap}
 .chip.green{background:var(--green)}.chip.blue{background:var(--blue)}.chip.red{background:var(--red)}.chip.black{background:var(--black)}
+.chip.yellow{background:var(--yellow);color:#3b2f00}
 
 /* ---------- intro ---------- */
 #intro{align-items:center;justify-content:center;padding:28px 18px calc(28px + env(safe-area-inset-bottom));text-align:center;gap:14px}
@@ -51,7 +52,8 @@ h1 span{color:var(--green)}
 .tag{margin:0;font-weight:700;color:var(--muted);font-size:clamp(15px,4vw,19px)}
 .how{margin:4px 0 0;max-width:560px;font-size:clamp(15px,3.8vw,18px)}
 .legend{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:880px;margin-top:6px;text-align:left}
-@media(min-width:760px){.legend{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:760px){.legend{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:759px){.legend .lg:last-child:nth-child(odd){grid-column:1/-1}}
 .lg{background:#ffffffd9;border-radius:16px;padding:12px 12px 14px;border-top:8px solid var(--c);box-shadow:0 6px 18px rgba(0,0,0,.07)}
 .lg h3{margin:0 0 4px;font-size:clamp(15px,3.8vw,18px)}
 .lg h3 i{display:inline-block;width:.8em;height:.8em;border-radius:50%;background:var(--c);margin-right:6px;vertical-align:-1px}
@@ -94,7 +96,7 @@ h1 span{color:var(--green)}
 .fb .why{color:var(--muted);font-size:clamp(13.5px,3.6vw,15px)}
 .fb .btn{margin-top:10px;padding:11px 30px}
 
-.bins{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,2.2vw,24px);padding:18px clamp(8px,3vw,28px) calc(18px + env(safe-area-inset-bottom));position:relative;z-index:1}
+.bins{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(6px,1.6vw,20px);padding:18px clamp(8px,3vw,28px) calc(18px + env(safe-area-inset-bottom));position:relative;z-index:1}
 .bin{
   position:relative;border:0;background:none;padding:0;color:#fff;
   height:clamp(120px,26vh,230px);display:flex;flex-direction:column;
@@ -113,8 +115,10 @@ h1 span{color:var(--green)}
   background-color:var(--c);
   background-image:linear-gradient(90deg,transparent 0 28%,rgba(255,255,255,.14) 28% 33%,transparent 33% 67%,rgba(255,255,255,.14) 67% 72%,transparent 72%);
   clip-path:polygon(0 0,100% 0,91% 100%,9% 100%);border-radius:0 0 16px 16px;
-  font-weight:900;font-size:clamp(14px,3.9vw,24px);letter-spacing:.02em;text-shadow:0 2px 0 rgba(0,0,0,.25);
+  font-weight:900;font-size:clamp(10px,2.9vw,22px);letter-spacing:.02em;text-shadow:0 2px 0 rgba(0,0,0,.25);
 }
+.bin[data-bin="yellow"]{color:#3b2f00}
+.bin[data-bin="yellow"] .body{text-shadow:none}
 .bin.hover,.bin:hover{transform:translateY(-4px) scale(1.04)}
 .bin.hover .lid,.bin.open .lid{transform:rotate(-26deg)}
 .bin.hover{filter:drop-shadow(0 0 14px rgba(255,255,255,.95)) drop-shadow(0 0 4px rgba(0,0,0,.25))}
@@ -170,7 +174,7 @@ h1 span{color:var(--green)}
     <div class="logo">♻️</div>
     <h1>Sort It <span>Right!</span></h1>
     <p class="tag">Ward 11Aa · Model of Responsible Living 💚♻️</p>
-    <p class="how"><b>10 rounds.</b> One piece of waste each round. Drag it into the correct bin (or just tap a bin). Learn the four bins below first!</p>
+    <p class="how"><b>10 rounds.</b> One piece of waste each round. Drag it into the correct bin (or just tap a bin). Learn the five bins below first!</p>
     <div class="legend" id="introLegend"></div>
     <p class="note">Under the new rules, sanitation workers can refuse collection if waste isn't properly segregated at source.</p>
     <p class="best" id="bestLine"></p>
@@ -195,7 +199,7 @@ h1 span{color:var(--green)}
           <div class="icon" id="icon"></div>
           <div class="iname" id="iname"></div>
         </div>
-        <p class="hint">Drag it to the right bin — or tap a bin (keys 1–4)</p>
+        <p class="hint">Drag it to the right bin — or tap a bin (keys 1–5)</p>
       </div>
       <div class="fb" id="fb" role="status" aria-live="polite">
         <div class="big" id="fbEmoji"></div>
@@ -240,12 +244,13 @@ h1 span{color:var(--green)}
 "use strict";
 
 const ROUNDS = 10;
-const ORDER = ["green", "blue", "red", "black"];
+const ORDER = ["green", "blue", "red", "black", "yellow"];
 const BINS = {
-  green: { name: "Green", kind: "Wet waste",      bin: "Green bin",  info: "Food leftovers, fruit & vegetable peels, flowers, tea leaves" },
-  blue:  { name: "Blue",  kind: "Dry waste",      bin: "Blue bin",   info: "Plastic, paper, glass, metal, wood, rubber" },
-  red:   { name: "Red",   kind: "Sanitary waste", bin: "Red bin",    info: "Diapers, sanitary pads, tampons" },
-  black: { name: "Black", kind: "Hazardous / special-care waste", bin: "Black bin", info: "Bulbs, medicines, paint, batteries, e-waste" }
+  green:  { name: "Green",  kind: "Wet waste",      bin: "Green bin",  info: "Food leftovers, fruit & vegetable peels, flowers, tea leaves" },
+  blue:   { name: "Blue",   kind: "Dry waste",      bin: "Blue bin",   info: "Plastic, paper, glass, metal, wood, rubber" },
+  red:    { name: "Red",    kind: "Sanitary waste", bin: "Red bin",    info: "Diapers, sanitary pads, tampons" },
+  black:  { name: "Black",  kind: "Hazardous / special-care waste", bin: "Black bin", info: "Bulbs, medicines, paint, batteries" },
+  yellow: { name: "Yellow", kind: "E-waste",        bin: "Yellow bin", info: "Old mobile phones, chargers, earphones, laptops and other electronics" }
 };
 
 const SVG_PAD = '<svg viewBox="0 0 100 100"><g transform="rotate(-30 50 50)"><path d="M40 8h20a8 8 0 0 1 8 8v22l14 8v18l-14 8v12a8 8 0 0 1-8 8H40a8 8 0 0 1-8-8V64l-14-8V46l14-8V16a8 8 0 0 1 8-8z" fill="#fff" stroke="#e0709a" stroke-width="3"/><rect x="42" y="18" width="16" height="64" rx="8" fill="#f9c6d8"/></g></svg>';
@@ -283,9 +288,12 @@ const ITEMS = [
   { n: "Expired medicines", i: "💊", b: "black", w: "Old medicines are hazardous — never mix them with other waste." },
   { n: "Dead battery",      i: "🔋", b: "black", w: "Batteries contain harmful chemicals and go in the black bin." },
   { n: "Leftover paint",    i: "🎨", b: "black", w: "Paint is hazardous special-care waste." },
-  { n: "Old mobile phone",  i: "📱", b: "black", w: "Electronics are e-waste and go in the black bin." },
-  { n: "Broken earphones",  i: "🎧", b: "black", w: "Small electronics count as e-waste." },
-  { n: "Damaged charger",   i: "🔌", b: "black", w: "Chargers and cables are e-waste." }
+  // YELLOW – e-waste
+  { n: "Old mobile phone",  i: "📱", b: "yellow", w: "Electronics are e-waste and go in the yellow bin." },
+  { n: "Broken earphones",  i: "🎧", b: "yellow", w: "Small electronics count as e-waste." },
+  { n: "Damaged charger",   i: "🔌", b: "yellow", w: "Chargers and cables are e-waste." },
+  { n: "Old laptop",        i: "💻", b: "yellow", w: "Computers and laptops are e-waste." },
+  { n: "Broken computer mouse", i: "🖱️", b: "yellow", w: "Computer accessories are e-waste." }
 ];
 
 /* ---------- helpers ---------- */
@@ -313,7 +321,7 @@ function renderLegend(el) {
     "</h3><p>" + BINS[k].info + "</p></div>").join("");
 }
 
-/* 2 items per bin so every bin shows up, plus 2 random extras */
+/* 2 items per bin so every bin shows up, plus random extras if ROUNDS grows */
 function pickRounds() {
   let chosen = [];
   ORDER.forEach((k) => {
@@ -501,7 +509,7 @@ function endGame() {
   const t = score >= 10 ? ["🏆", "Ward 11Aa Champion!", "Perfect segregation! You're a true model of responsible living — the sanitation workers would salute you. 💚"]
         : score >= 8  ? ["🌟", "Segregation Star!", "Excellent sorting! Just a little more practice and you'll be perfect."]
         : score >= 6  ? ["🌱", "Getting Greener!", "Good effort! Check the cheat sheet and try for a higher score."]
-        : score >= 4  ? ["♻️", "Keep Learning!", "Wet, dry, sanitary, hazardous — one more round and it'll click."]
+        : score >= 4  ? ["♻️", "Keep Learning!", "Wet, dry, sanitary, hazardous, e-waste — one more round and it'll click."]
         :               ["🗑️", "Needs Another Round", "No worries — peek at the bin guide and try again. Every sorted item helps!"];
   $("#trophy").textContent = t[0];
   $("#endTitle").textContent = t[1];
@@ -572,7 +580,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") toggleModal(false);
   if (!screens.game.classList.contains("active") || locked) return;
   const n = parseInt(e.key, 10);
-  if (n >= 1 && n <= 4) answer(ORDER[n - 1]);
+  if (n >= 1 && n <= ORDER.length) answer(ORDER[n - 1]);
 });
 
 renderLegend($("#introLegend"));
