@@ -6,6 +6,12 @@
 <title>Sort It Right – Ward 11A</title>
 <meta name="theme-color" content="#e9f8ef">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♻️</text></svg>">
+
+<!-- Firebase App (the core Firebase SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<!-- Firebase Firestore -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
 <style>
 :root{
   --bg1:#eafaf0; --bg2:#d3efdd; --ink:#14301f; --muted:#4d6a58;
@@ -147,15 +153,59 @@ h1 span{color:var(--green)}
 .miss .e svg{width:1em;height:1em;display:block}
 .actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:8px}
 
-/* ---------- modal ---------- */
+/* ---------- modal (Cheat Sheet Only) ---------- */
 .modal{position:fixed;inset:0;background:rgba(10,30,18,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
 .modal.show{display:flex}
 .sheet{background:#f6fdf9;border-radius:22px;max-width:520px;width:100%;max-height:90dvh;overflow:auto;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .sheet h2{margin:0 0 10px}
 .sheet .legend{grid-template-columns:1fr;margin:0 0 14px}
 
-/* ---------- confetti ---------- */
-.confetti{position:fixed;top:-40px;font-size:26px;pointer-events:none;z-index:60;animation:fall linear forwards}
+/* ---------- register ---------- */
+input{-webkit-user-select:text;user-select:text}
+#register{align-items:center;justify-content:center;padding:28px 18px calc(28px + env(safe-area-inset-bottom));text-align:center;gap:14px}
+.card{width:min(440px,100%);background:#fff;border-radius:24px;padding:20px 18px 22px;box-shadow:0 16px 40px rgba(0,0,0,.14);text-align:left;display:grid;gap:12px}
+.card label{display:grid;gap:5px;font-weight:800;font-size:15px}
+.card input{font:inherit;font-size:16px;font-weight:600;padding:12px 14px;border:2px solid #cfe3d6;border-radius:14px;background:#f8fdfa;color:var(--ink);width:100%}
+.card input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(31,157,85,.2)}
+.card input.bad{border-color:var(--red)}
+.err{margin:0;min-height:1.2em;color:var(--red);font-weight:700;font-size:14px}
+.fine{margin:0;font-size:13px;color:var(--muted)}
+.row2{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* ---------- Permanent Leaderboard ---------- */
+#persistentBoard{
+  width: min(520px, 100%);
+  margin: 28px auto 0;
+  background: #f6fdf9;
+  border-radius: 22px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+  border: 4px solid #fff;
+  text-align: left;
+}
+.stat{font-weight:800;color:var(--muted);margin:0;min-height:1.2em}
+.live{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);font-weight:700;margin:0 0 10px}
+.live i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--green);animation:blink 1.6s ease-in-out infinite}
+.board{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.board li{display:grid;grid-template-columns:2.2em 1fr auto;align-items:center;gap:8px;background:#fff;border-radius:14px;padding:8px 12px;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.board li.me{outline:3px solid var(--gold);background:#fffbe6}
+.board li.empty{display:block;background:none;box-shadow:none;text-align:center;color:var(--muted);font-weight:600;padding:14px 0}
+.board .rk{font-weight:900;text-align:center;font-size:18px}
+.board .who{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
+.board .who small{display:block;font-weight:600;color:var(--muted);font-size:12.5px}
+.board .sc{font-weight:900;text-align:right;line-height:1.15}
+.board .sc small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+
+/* ---------- Admin Dashboard ---------- */
+#admin { padding:28px 18px; align-items:center; }
+.admin-card { width:100%; max-width:800px; background:#fff; border-radius:24px; padding:20px; box-shadow:0 16px 40px rgba(0,0,0,.14); overflow-x:auto;}
+.admin-table { width:100%; border-collapse:collapse; margin-top:20px; font-size:15px; text-align:left; }
+.admin-table th, .admin-table td { padding:12px 10px; border-bottom:1px solid #cfe3d6; }
+.admin-table th { background:#eafaf0; font-weight:800; color:var(--green); }
+.admin-table tr:hover { background-color: #f8fdfa; }
+.del-btn:hover { background: #fee2e2 !important; border-radius: 6px; }
+
+@keyframes blink{50%{opacity:.25}}
 @keyframes fall{to{transform:translateY(112vh) rotate(540deg);opacity:.9}}
 @keyframes float{50%{transform:translateY(-8px)}}
 @keyframes pulse{50%{transform:scale(1.05)}}
@@ -179,6 +229,53 @@ h1 span{color:var(--green)}
     <p class="note">Under the new rules, sanitation workers can refuse collection if waste isn't properly segregated at source.</p>
     <p class="best" id="bestLine"></p>
     <button class="btn" id="playBtn">▶ Play</button>
+    <p class="stat" id="statLine"></p>
+  </section>
+
+  <!-- REGISTER -->
+  <section id="register" class="screen">
+    <div class="logo">👋</div>
+    <h1 style="font-size:clamp(28px,7.5vw,44px)">Who's playing?</h1>
+    <p class="tag">Enter your details to join the Ward 11A leaderboard</p>
+    <form class="card" id="regForm" autocomplete="off" novalidate>
+      <label>Your name
+        <input id="nameIn" type="text" maxlength="40" placeholder="e.g. Priya Sharma" autocomplete="name" enterkeyhint="next">
+      </label>
+      <label>House number
+        <input id="houseIn" type="text" maxlength="12" placeholder="e.g. A-24 or 302" autocomplete="off" enterkeyhint="go">
+      </label>
+      <p class="err" id="regErr" role="alert"></p>
+      <p class="fine">Your name and house number are collected for the ward leaderboard.</p>
+      <div class="row2">
+        <button type="button" class="btn ghost small" id="regBack">← Back</button>
+        <button type="submit" class="btn" id="regGo">Start game ▶</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ADMIN DASHBOARD -->
+  <section id="admin" class="screen">
+    <div class="hud" style="justify-content: flex-start; width: 100%; max-width: 800px;">
+      <button class="btn ghost small" id="adminBack">← Back</button>
+    </div>
+    <div class="logo" style="animation:none;">🛠️</div>
+    <h2 style="margin: 0 0 14px 0;">Admin Dashboard</h2>
+    <div class="admin-card">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>House</th>
+            <th>Score</th>
+            <th>Attempts</th>
+            <th style="text-align:center;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody">
+          <tr><td colspan="5" style="text-align:center;">Loading records...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <!-- GAME -->
@@ -224,13 +321,16 @@ h1 span{color:var(--green)}
       <ul id="missList"></ul>
     </div>
     <p class="best" id="endBest"></p>
+    <p class="best" id="saveLine"></p>
+    <button class="btn small ghost" id="retryBtn" hidden>↻ Retry saving</button>
     <div class="actions">
       <button class="btn" id="againBtn">↻ Play again</button>
       <button class="btn ghost" id="shareBtn">📤 Share score</button>
+      <button class="btn ghost small" id="changeBtn">👤 Change player</button>
     </div>
   </section>
 
-  <!-- CHEAT SHEET -->
+  <!-- CHEAT SHEET MODAL -->
   <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Bin cheat sheet">
     <div class="sheet">
       <h2>🗑️ Which bin?</h2>
@@ -238,12 +338,40 @@ h1 span{color:var(--green)}
       <button class="btn small ghost" id="closeModal">Got it</button>
     </div>
   </div>
+
+  <!-- PERSISTENT LEADERBOARD (Moved dynamically) -->
+  <div id="persistentBoard" style="display: none;">
+    <h2 style="margin-top:0">🏆 Leaderboard</h2>
+    <p class="live"><i></i><span id="liveTxt">Loading...</span></p>
+    <ol class="board" id="boardList"></ol>
+  </div>
 </div>
 
 <script>
 "use strict";
 
+/* =========================================
+   1. FIREBASE SETUP
+========================================= */
+// TODO: Replace with your actual Firebase project config
+const firebaseConfig = {
+  apiKey: "AIzaSyAR2PGyht8NUrruNfRB-KSbKrK1AET_PIk",
+  authDomain: "sort-it-right-ff3e9.firebaseapp.com",
+  projectId: "sort-it-right-ff3e9",
+  storageBucket: "sort-it-right-ff3e9.firebasestorage.app",
+  messagingSenderId: "641232839347",
+  appId: "1:641232839347:web:b7465a2fc2e7acd16746c6",
+  measurementId: "G-1DRBQJ0CY5"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ---------------------------------------------------------
+
 const ROUNDS = 10;
+const BOARD_REFRESH_MS = 15000;
 const ORDER = ["green", "blue", "red", "black", "yellow"];
 const BINS = {
   green:  { name: "Green",  kind: "Wet waste",      bin: "Green bin",  info: "Food leftovers, fruit & vegetable peels, flowers, tea leaves" },
@@ -258,7 +386,6 @@ const SVG_TAMPON = '<svg viewBox="0 0 100 100"><g transform="rotate(35 50 50)"><
 const SVG_DIAPER = '<svg viewBox="0 0 100 100"><path d="M8 28h84v14q0 30-22 42-8 4-20 4t-20-4Q8 72 8 42z" fill="#fff" stroke="#5b9fe3" stroke-width="3"/><rect x="8" y="28" width="84" height="10" fill="#bfe0ff"/><rect x="17" y="30" width="13" height="6" rx="2" fill="#5b9fe3"/><rect x="70" y="30" width="13" height="6" rx="2" fill="#5b9fe3"/><path d="M38 56q12 10 24 0" stroke="#bfe0ff" stroke-width="5" fill="none" stroke-linecap="round"/></svg>';
 
 const ITEMS = [
-  // GREEN – wet
   { n: "Banana peel",       i: "🍌", b: "green", w: "Fruit and vegetable peels are biodegradable kitchen waste." },
   { n: "Apple core",        i: "🍎", b: "green", w: "Leftover fruit is wet, biodegradable waste." },
   { n: "Carrot peels",      i: "🥕", b: "green", w: "Vegetable scraps are wet waste that can become compost." },
@@ -269,7 +396,6 @@ const ITEMS = [
   { n: "Used tea leaves",   i: "🍵", b: "green", w: "Tea leaves are biodegradable kitchen waste." },
   { n: "Watermelon rind",   i: "🍉", b: "green", w: "Fruit rinds are wet waste." },
   { n: "Mango peel",        i: "🥭", b: "green", w: "Fruit peels are wet waste." },
-  // BLUE – dry
   { n: "Empty shampoo bottle", i: "🧴", b: "blue", w: "Plastic is dry, recyclable waste." },
   { n: "Old newspaper",     i: "📰", b: "blue", w: "Paper is dry waste and can be recycled." },
   { n: "Empty tin can",     i: "🥫", b: "blue", w: "Metal is dry, recyclable waste." },
@@ -279,16 +405,13 @@ const ITEMS = [
   { n: "Wooden plank",      i: "🪵", b: "blue", w: "Wood is part of dry waste." },
   { n: "Old notebook",      i: "📓", b: "blue", w: "Paper is dry waste." },
   { n: "Empty juice carton",i: "🧃", b: "blue", w: "Cartons and packaging are dry waste." },
-  // RED – sanitary
   { n: "Used baby diaper",  s: SVG_DIAPER, b: "red", w: "Diapers are sanitary waste — wrap them and use the red bin." },
   { n: "Sanitary pad",      s: SVG_PAD,    b: "red", w: "Sanitary napkins are sanitary waste — wrap before disposal." },
   { n: "Used tampon",       s: SVG_TAMPON, b: "red", w: "Hygiene products belong in the red sanitary bin." },
-  // BLACK – hazardous / special care
   { n: "Fused bulb",        i: "💡", b: "black", w: "Bulbs are domestic hazardous waste and need special handling." },
   { n: "Expired medicines", i: "💊", b: "black", w: "Old medicines are hazardous — never mix them with other waste." },
   { n: "Dead battery",      i: "🔋", b: "black", w: "Batteries contain harmful chemicals and go in the black bin." },
   { n: "Leftover paint",    i: "🎨", b: "black", w: "Paint is hazardous special-care waste." },
-  // YELLOW – e-waste
   { n: "Old mobile phone",  i: "📱", b: "yellow", w: "Electronics are e-waste and go in the yellow bin." },
   { n: "Broken earphones",  i: "🎧", b: "yellow", w: "Small electronics count as e-waste." },
   { n: "Damaged charger",   i: "🔌", b: "yellow", w: "Chargers and cables are e-waste." },
@@ -298,7 +421,7 @@ const ITEMS = [
 
 /* ---------- helpers ---------- */
 const $ = (s) => document.querySelector(s);
-const screens = { intro: $("#intro"), game: $("#game"), end: $("#end") };
+const screens = { intro: $("#intro"), register: $("#register"), game: $("#game"), end: $("#end"), admin: $("#admin") };
 const itemEl = $("#item"), iconEl = $("#icon"), inameEl = $("#iname"), wrapEl = $("#itemWrap");
 const fbEl = $("#fb"), binsEl = $("#bins");
 let binEls = [];
@@ -321,7 +444,6 @@ function renderLegend(el) {
     "</h3><p>" + BINS[k].info + "</p></div>").join("");
 }
 
-/* 2 items per bin so every bin shows up, plus random extras if ROUNDS grows */
 function pickRounds() {
   let chosen = [];
   ORDER.forEach((k) => {
@@ -358,9 +480,24 @@ function tone(freqs, dur, type) {
 let queue = [], idx = 0, score = 0, streak = 0, cur = null, locked = true, log = [];
 let tx = 0, ty = 0, drag = null, feedbackTimer = null;
 
+// The central navigation function handles moving the persistent leaderboard
 function show(name) {
   Object.keys(screens).forEach((k) => screens[k].classList.toggle("active", k === name));
   window.scrollTo(0, 0);
+
+  const boardEl = $("#persistentBoard");
+  // If we are on the Intro or End screens, attach and show the leaderboard
+  if (name === "intro" || name === "end") {
+    screens[name].appendChild(boardEl);
+    boardEl.style.display = "block";
+    refreshBoard();
+    if (!boardTimer) boardTimer = setInterval(() => { if (!document.hidden) refreshBoard(); }, BOARD_REFRESH_MS);
+  } else {
+    // Hide and stop fetching for other screens (game, admin, register)
+    boardEl.style.display = "none";
+    clearInterval(boardTimer);
+    boardTimer = null;
+  }
 }
 
 function buildBins() {
@@ -373,6 +510,8 @@ function buildBins() {
 
 function startGame() {
   queue = pickRounds(); idx = 0; score = 0; streak = 0; log = [];
+  gameId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  gameStart = Date.now();
   show("game");
   loadRound();
 }
@@ -533,6 +672,9 @@ function endGame() {
 
   if (score >= 8) confetti();
   tone(score >= 8 ? [523, 659, 784, 1047] : [440, 392], 0.14, "triangle");
+
+  pending = { name: player.name, house: player.house, score: score, seconds: Math.round((Date.now() - gameStart) / 1000) };
+  sendScore();
 }
 
 function confetti() {
@@ -550,6 +692,240 @@ function confetti() {
   }
 }
 
+/* ---------- player, API & leaderboard ---------- */
+let player = null, gameId = "", gameStart = 0, pending = null, boardTimer = null;
+
+function loadPlayer() {
+  try { const p = JSON.parse(localStorage.getItem("w11a_player")); return p && p.name && p.house ? p : null; } catch (e) { return null; }
+}
+function savePlayer(p) { try { localStorage.setItem("w11a_player", JSON.stringify(p)); } catch (e) {} }
+function clean(s, max) { return String(s || "").replace(/\s+/g, " ").trim().slice(0, max); }
+function mk(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+/* registration & admin redirect */
+function showRegister() {
+  const p = player || loadPlayer() || {};
+  $("#nameIn").value = p.name || "";
+  $("#houseIn").value = p.house || "";
+  $("#regErr").textContent = "";
+  $("#nameIn").classList.remove("bad");
+  $("#houseIn").classList.remove("bad");
+  show("register");
+  setTimeout(() => { try { (p.name ? $("#regGo") : $("#nameIn")).focus({ preventScroll: true }); } catch (e) {} }, 50);
+}
+
+$("#regForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = clean($("#nameIn").value, 40), house = clean($("#houseIn").value, 12);
+  
+  // ADMIN DASHBOARD CONDITION
+  if (name.toLowerCase() === "admin" && house === "13") {
+     loadAdminDashboard();
+     return;
+  }
+
+  const nOk = name.length >= 2, hOk = house.length >= 1;
+  $("#nameIn").classList.toggle("bad", !nOk);
+  $("#houseIn").classList.toggle("bad", !hOk);
+  if (!nOk || !hOk) {
+    $("#regErr").textContent = !nOk ? "Please enter your name (at least 2 letters)." : "Please enter your house number.";
+    return;
+  }
+  player = { name: name, house: house };
+  savePlayer(player);
+  tone([523, 659], 0.09);
+  startGame();
+});
+
+/* ---------- Firebase Leaderboard Logic ---------- */
+
+// Save Score to Firestore
+async function sendScore() {
+  const mine = pending, line = $("#saveLine"), retry = $("#retryBtn");
+  retry.hidden = true;
+  if (!mine) { line.textContent = ""; return; }
+  line.textContent = "Saving your score to leaderboard…";
+  
+  try {
+    // Generate a unique ID per player based on name and house 
+    const docId = (mine.name + "_" + mine.house).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const playerRef = db.collection("players").doc(docId);
+
+    await db.runTransaction(async (transaction) => {
+      const doc = await transaction.get(playerRef);
+      if (!doc.exists) {
+        transaction.set(playerRef, {
+          name: mine.name,
+          house: mine.house,
+          bestScore: mine.score,
+          bestTime: mine.seconds,
+          attempts: 1,
+          lastPlayed: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } else {
+        const d = doc.data();
+        let newScore = d.bestScore;
+        let newTime = d.bestTime;
+        
+        // Update best score or beat the time
+        if (mine.score > d.bestScore || (mine.score === d.bestScore && mine.seconds < d.bestTime)) {
+          newScore = mine.score;
+          newTime = mine.seconds;
+        }
+
+        transaction.update(playerRef, {
+          bestScore: newScore,
+          bestTime: newTime,
+          attempts: (d.attempts || 0) + 1,
+          lastPlayed: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+
+    if (pending === mine) {
+       pending = null;
+       line.textContent = "✅ Saved to Leaderboard!";
+       refreshBoard(); // Update the board immediately once saved
+    }
+  } catch (e) {
+    console.error(e);
+    if (pending === mine) {
+      line.textContent = "⚠️ Couldn't save your score — check your internet.";
+      retry.hidden = false;
+    }
+  }
+}
+
+// Render Leaderboard list
+function medal(r) { return r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : String(r); }
+function setBoardMsg(t) { $("#boardList").replaceChildren(mk("li", "empty", t)); }
+
+function renderBoard(rows) {
+  if (!rows.length) { setBoardMsg("No scores yet — be the first! 🌱"); return; }
+  $("#boardList").replaceChildren.apply($("#boardList"), rows.map((r) => {
+    const li = mk("li");
+    const mine = player && String(r.name).toLowerCase() === player.name.toLowerCase() &&
+      (r.house == null || String(r.house).toLowerCase() === player.house.toLowerCase());
+    if (mine) li.className = "me";
+    const who = mk("span", "who", r.name);
+    if (r.house) who.appendChild(mk("small", "", "House " + r.house));
+    const sc = mk("span", "sc", r.score + "/" + ROUNDS);
+    sc.appendChild(mk("small", "", r.seconds + "s"));
+    li.append(mk("span", "rk", medal(r.rank)), who, sc);
+    return li;
+  }));
+}
+
+// Fetch Leaderboard from Firestore (Tie-breaker handled in JS)
+async function refreshBoard() {
+  const live = $("#liveTxt");
+  try {
+    // Only query by bestScore so it loads instantly without needing a Composite Index
+    const snap = await db.collection("players")
+        .orderBy("bestScore", "desc")
+        .limit(50)
+        .get();
+        
+    let board = [];
+    snap.forEach(doc => {
+       const d = doc.data();
+       board.push({ name: d.name, house: d.house, score: d.bestScore, seconds: d.bestTime });
+    });
+
+    // Handle the tie-breaker in JavaScript (fastest time wins if scores are tied)
+    board.sort((a, b) => {
+       if (b.score === a.score) return a.seconds - b.seconds;
+       return 0;
+    });
+
+    // Assign ranks after sorting
+    board.forEach((p, index) => {
+      p.rank = index + 1;
+    });
+
+    live.textContent = "Live · " + board.length + (board.length === 1 ? " player" : " players") + " · updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    renderBoard(board);
+    
+  } catch (e) {
+    console.error("Leaderboard Error:", e);
+    live.textContent = "Couldn't refresh — retrying…";
+  }
+}
+
+// Fetch player counts on Intro
+async function refreshStats() {
+  const el = $("#statLine");
+  try {
+    const snap = await db.collection("players").get(); // basic get size
+    const totalPlayers = snap.size;
+    el.textContent = totalPlayers > 0 ? "👥 " + totalPlayers + (totalPlayers === 1 ? " neighbour has" : " neighbours have") + " joined so far" : "Be the first to play! 🌱";
+  } catch (e) {}
+}
+
+
+/* ---------- Admin Dashboard Logic ---------- */
+async function loadAdminDashboard() {
+  show("admin");
+  const tBody = $("#adminTableBody");
+  tBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading records...</td></tr>';
+  
+  try {
+    const snap = await db.collection("players").orderBy("bestScore", "desc").get();
+    if(snap.empty){
+      tBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No players have played yet.</td></tr>';
+      return;
+    }
+    
+    let html = "";
+    snap.forEach(doc => {
+       const d = doc.data();
+       html += `<tr>
+                  <td><b>${d.name}</b></td>
+                  <td>${d.house}</td>
+                  <td>${d.bestScore} / ${ROUNDS}</td>
+                  <td>${d.attempts}</td>
+                  <td style="text-align:center;">
+                    <button class="del-btn" data-id="${doc.id}" title="Delete player" style="background:none; border:none; font-size:20px; cursor:pointer; padding:4px;">🗑️</button>
+                  </td>
+                </tr>`;
+    });
+    tBody.innerHTML = html;
+  } catch (e) {
+    tBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: red;">Failed to load records. Check Firebase Config.</td></tr>';
+  }
+}
+
+// Event delegation for Admin table delete buttons
+$("#adminTableBody").addEventListener("click", async (e) => {
+  const btn = e.target.closest(".del-btn");
+  if (!btn) return; // If clicked outside a button, ignore
+  
+  const docId = btn.getAttribute("data-id");
+  if (confirm("Are you sure you want to permanently delete this player's record?")) {
+    btn.style.opacity = "0.5";
+    try {
+      await db.collection("players").doc(docId).delete();
+      loadAdminDashboard(); // Refresh the table automatically
+    } catch (err) {
+      alert("Error deleting record.");
+      btn.style.opacity = "1";
+    }
+  }
+});
+
+$("#adminBack").addEventListener("click", () => show("register"));
+
+
+/* ---------- Default Listeners ---------- */
+$("#changeBtn").addEventListener("click", showRegister);
+$("#retryBtn").addEventListener("click", sendScore);
+$("#regBack").addEventListener("click", () => show("intro"));
+
 /* ---------- wiring ---------- */
 function refreshBest() {
   const b = getBest();
@@ -557,7 +933,7 @@ function refreshBest() {
 }
 function toggleModal(on) { $("#modal").classList.toggle("show", on); }
 
-$("#playBtn").addEventListener("click", () => { tone([523, 659], 0.09); startGame(); });
+$("#playBtn").addEventListener("click", showRegister);
 $("#againBtn").addEventListener("click", startGame);
 $("#nextBtn").addEventListener("click", nextRound);
 $("#helpBtn").addEventListener("click", () => toggleModal(true));
@@ -577,16 +953,20 @@ $("#shareBtn").addEventListener("click", async () => {
   } catch (e) {}
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") toggleModal(false);
+  if (e.key === "Escape") { toggleModal(false); }
   if (!screens.game.classList.contains("active") || locked) return;
   const n = parseInt(e.key, 10);
   if (n >= 1 && n <= ORDER.length) answer(ORDER[n - 1]);
 });
 
+// INITIALIZATION
 renderLegend($("#introLegend"));
 renderLegend($("#modalLegend"));
 buildBins();
 refreshBest();
+player = loadPlayer();
+refreshStats();
+show("intro"); // Ensures the permanent leaderboard loads correctly on first boot
 </script>
 </body>
 </html>
